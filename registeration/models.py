@@ -30,7 +30,7 @@ class Attendee(models.Model):
     place_of_work = models.CharField(max_length=100, null=True, blank=True)
     school = models.CharField(max_length=100, null=True, blank=True)
     sch_fellowship = models.CharField(max_length=100, null=True, blank=True)
-    church = models.CharField(max_length=100, null=True, blank=True)
+    church = models.CharField(max_length=100, null=False, blank=False)
     marital_status = models.CharField(max_length=50, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -30,18 +30,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-@_=$8ohv9=d*4t@q(7xsn06cs_3&-i1^nrgo@p%4dd-p3)b!@p'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-@_=$8ohv9=d*4t@q(7xsn06cs_3&-i1^nrgo@p%4dd-p3)b!@p')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = env("DEBUG")
-DEBUG = False
+DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = []
-ALLOWED_HOSTS.extend(filter(None, os.environ.get("ALLOWED_HOSTS", "").split(",")))
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
 
-CSRF_TRUSTED_ORIGINS = ["https://cys-makurdi.netlify.app", "http://localhost:4200/", "http://localhost:5173"]
+CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', 'https://cys-makurdi.netlify.app,http://localhost:4200,http://localhost:5173').split(',')
 
-CORS_ALLOWED_ORIGINS = ["https://cys-makurdi.netlify.app", "http://localhost:5173", "http://localhost:4200",]
+CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', 'https://cys-makurdi.netlify.app,http://localhost:5173,http://localhost:4200').split(',')
 
 CORS_ALLOW_CREDENTIALS = True
 
