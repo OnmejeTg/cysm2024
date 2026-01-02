@@ -140,7 +140,7 @@ DATABASES = {
     # }
     'default': dj_database_url.config(
         # Fallback to cysm_db if DATABASE_URL is not set
-        default='postgresql://cysm_user:your_secure_password@localhost:5432/cysm_db',
+        default='postgresql://cysm_user:password@localhost:5432/cysm_db',
         conn_max_age=600
     )
 }
