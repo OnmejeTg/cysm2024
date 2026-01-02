@@ -139,8 +139,8 @@ DATABASES = {
     #     "NAME": BASE_DIR / "db.sqlite3",
     # }
     'default': dj_database_url.config(
-        # Replace this value with your local database's connection string.
-        default='postgresql://postgres:postgres@localhost:5432/mysite',
+        # Fallback to cysm_db if DATABASE_URL is not set
+        default='postgresql://cysm_user:your_secure_password@localhost:5432/cysm_db',
         conn_max_age=600
     )
 }
