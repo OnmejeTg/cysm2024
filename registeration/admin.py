@@ -8,13 +8,13 @@ class AttendeeAdmin(ImportExportModelAdmin):
     list_display = ('surname', 'other_name', 'email', 'phone', 'created_at')  
     search_fields = ('surname', 'other_name', 'email', 'phone', 'cys_code')
     list_filter = ('created_at',)
-    resource_class = AttendeeResource
+    resource_classes = [AttendeeResource]
 
 @admin.register(Registrar)
 class RegistrarAdmin(ImportExportModelAdmin):
     list_display = ('get_surname', 'get_other_name', 'get_email', 'get_phone', 'get_created_at')  
     search_fields = ('attendee__surname', 'attendee__other_name', 'attendee__email', 'attendee__phone', 'attendee__cys_code')
-    resource_class = RegistrarResource
+    resource_classes = [RegistrarResource]
     
     def get_surname(self, obj):
         return obj.attendee.surname
