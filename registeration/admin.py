@@ -1,17 +1,20 @@
 from django.contrib import admin
 from . models import Attendee, Registrar
-# Register your models here.
+from .resources import AttendeeResource, RegistrarResource  
+from import_export.admin import ImportExportModelAdmin
 
 @admin.register(Attendee)
-class AttendeeAdmin(admin.ModelAdmin):
+class AttendeeAdmin(ImportExportModelAdmin):
     list_display = ('surname', 'other_name', 'email', 'phone', 'created_at')  
     search_fields = ('surname', 'other_name', 'email', 'phone', 'cys_code')
     list_filter = ('created_at',)
+    resource_class = AttendeeResource
 
 @admin.register(Registrar)
-class RegistrarAdmin(admin.ModelAdmin):
+class RegistrarAdmin(ImportExportModelAdmin):
     list_display = ('get_surname', 'get_other_name', 'get_email', 'get_phone', 'get_created_at')  
     search_fields = ('attendee__surname', 'attendee__other_name', 'attendee__email', 'attendee__phone', 'attendee__cys_code')
+    resource_class = RegistrarResource
     
     def get_surname(self, obj):
         return obj.attendee.surname
