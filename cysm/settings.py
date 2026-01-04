@@ -124,27 +124,41 @@ SIMPLE_JWT = {
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
-    # "default": {
-    #     "ENGINE": env("DATABASE_ENGINE"),
-    #     "NAME": env("DATABASE_NAME"),
-    #     "USER": env("DATABASE_USER"),
-    #     "PASSWORD": env("DATABASE_PASSWORD"),
-    #     "HOST": env("DATABASE_HOST"),
-    #     "PORT": env("DATABASE_PORT"),
-    #     "OPTIONS": {"init_command": "SET sql_mode='STRICT_TRANS_TABLES'"},
-    # },
-    # "default": {
-    #     "ENGINE": "django.db.backends.sqlite3",
-    #     "NAME": BASE_DIR / "db.sqlite3",
-    # }
-    'default': dj_database_url.config(
-        # Fallback to cysm_db if DATABASE_URL is not set
-        default='postgresql://cysm_user:password@localhost:5432/cysm_db',
-        conn_max_age=600
-    )
-}
+# DATABASES = {
+#     # "default": {
+#     #     "ENGINE": env("DATABASE_ENGINE"),
+#     #     "NAME": env("DATABASE_NAME"),
+#     #     "USER": env("DATABASE_USER"),
+#     #     "PASSWORD": env("DATABASE_PASSWORD"),
+#     #     "HOST": env("DATABASE_HOST"),
+#     #     "PORT": env("DATABASE_PORT"),
+#     #     "OPTIONS": {"init_command": "SET sql_mode='STRICT_TRANS_TABLES'"},
+#     # },
+#     # "default": {
+#     #     "ENGINE": "django.db.backends.sqlite3",
+#     #     "NAME": BASE_DIR / "db.sqlite3",
+#     # }
+#     'default': dj_database_url.config(
+#         # Fallback to cysm_db if DATABASE_URL is not set
+#         default='postgresql://cysm_user:password@localhost:5432/cysm_db',
+#         conn_max_age=600
+#     )
+# }
 
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'cysm_db',
+        'USER': 'cysm_user',
+        'PASSWORD': 'password',
+        'HOST': 'localhost',
+        'PORT': '3306',
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            'charset': 'utf8mb4',
+        }
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators

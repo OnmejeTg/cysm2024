@@ -41,10 +41,10 @@ GRANT ALL PRIVILEGES ON DATABASE cysm_db TO cysm_user;
 
 1. **Clone the backend repository**:
    ```bash
-   mkdir -p ~/apps
-   cd ~/apps
-   git clone <your-backend-repo-url> cysm-backend
-   cd cysm-backend
+   mkdir -p /home/cysm/backend
+   cd /home/cysm/backend
+   git clone <your-backend-repo-url> cysm2024
+   cd cysm2024
    ```
 
 2. **Setup Virtual Environment**:
@@ -56,14 +56,14 @@ GRANT ALL PRIVILEGES ON DATABASE cysm_db TO cysm_user;
    ```
 
 3. **Configure Environment Variables**:
-   Create a `.env` file in `~/apps/cysm-backend/`:
+   Create a `.env` file in `/home/cysm/backend/cysm2024/`:
    ```bash
    DJANGO_SECRET_KEY=your_secret_key
    DJANGO_DEBUG=False
-   ALLOWED_HOSTS=yourdomain.com,YOUR_VPS_IP
+   ALLOWED_HOSTS=cysmkd.org,api.cysmkd.org,YOUR_VPS_IP
    DATABASE_URL=postgres://cysm_user:your_secure_password@localhost:5432/cysm_db
-   CORS_ALLOWED_ORIGINS=https://yourdomain.com,http://yourdomain.com
-   CSRF_TRUSTED_ORIGINS=https://yourdomain.com,http://yourdomain.com
+   CORS_ALLOWED_ORIGINS=https://cysmkd.org,http://cysmkd.org
+   CSRF_TRUSTED_ORIGINS=https://cysmkd.org,http://cysmkd.org
    ```
 
 4. **Prepare Django**:
@@ -83,13 +83,14 @@ GRANT ALL PRIVILEGES ON DATABASE cysm_db TO cysm_user;
    On your local machine (where you are now):
    ```bash
    # In New-project-101 directory
-   VITE_API_BASE_URL=https://api.yourdomain.com npm run build
+   VITE_API_BASE_URL=https://cysmkd.org npm run build
    ```
-   This creates a `dist` folder.
 
 2. **Upload to VPS**:
    ```bash
-   scp -r dist root@YOUR_VPS_IP:~/apps/cysm-frontend
+   # From your local machine
+   # Note: Uploading to /home/cysm/frontend directly
+   scp -r dist root@YOUR_VPS_IP:/home/cysm/frontend
    ```
 
 ## 5. Nginx Configuration
@@ -99,84 +100,81 @@ Create a new Nginx site configuration:
 sudo nano /etc/nginx/sites-available/cysm
 ```
 
-Paste the following (adjust paths and domains):
+Paste the following:
 ```nginx
 server {
     listen 80;
-    server_name yourdomain.com;
+    server_name cysmkd.org;
 
     # Frontend
     location / {
-        root /root/apps/cysm-frontend;
+        root /home/cysm/frontend/dist;
         try_files $uri /index.html;
     }
 
     # Backend API & Admin
     location /api/ {
         include proxy_params;
-        proxy_pass http://unix:/run/gunicorn.sock;
+        proxy_pass http://unix:/run/cysm.sock;
     }
 
     location /admin/ {
         include proxy_params;
-        proxy_pass http://unix:/run/gunicorn.sock;
+        proxy_pass http://unix:/run/cysm.sock;
     }
 
     # Static files for Django (Admin, etc)
     location /static/ {
-        alias /root/apps/cysm-backend/staticfiles/;
+        alias /home/cysm/backend/cysm2024/staticfiles/;
     }
 
     location /media/ {
-        alias /root/apps/cysm-backend/media/;
+        alias /home/cysm/backend/cysm2024/media/;
     }
 }
 ```
 
-## 6. Gunicorn Systemd Setup
-
-Create a systemd socket unit: `sudo nano /etc/systemd/system/gunicorn.socket`
-```ini
-[Unit]
-Description=gunicorn socket
-
-[Socket]
-ListenStream=/run/gunicorn.sock
-
-[Install]
-WantedBy=sockets.target
+Link the config and restart Nginx:
+```bash
+sudo ln -s /etc/nginx/sites-available/cysm /etc/nginx/sites-enabled
+sudo nginx -t
+sudo systemctl restart nginx
 ```
 
-Create a systemd service unit: `sudo nano /etc/systemd/system/gunicorn.service`
+## 6. Gunicorn Systemd Setup
+
+Create a systemd service unit:
+`sudo nano /etc/systemd/system/cysm.service`
+
 ```ini
 [Unit]
-Description=gunicorn daemon
-Requires=gunicorn.socket
+Description=cysm gunicorn daemon
 After=network.target
 
 [Service]
 User=root
 Group=www-data
-WorkingDirectory=/root/apps/cysm-backend
-ExecStart=/root/apps/cysm-backend/venv/bin/gunicorn \
+WorkingDirectory=/home/cysm/backend/cysm2024
+ExecStart=/home/cysm/backend/cysm2024/venv/bin/gunicorn \
           --access-logfile - \
           --workers 3 \
-          --bind unix:/run/gunicorn.sock \
+          --bind unix:/run/cysm.sock \
           cysm.wsgi:application
 
 [Install]
 WantedBy=multi-user.target
 ```
 
-Start and enable Gunicorn:
+Start and enable the service:
 ```bash
-sudo systemctl start gunicorn.socket
-sudo systemctl enable gunicorn.socket
+sudo systemctl daemon-reload
+sudo systemctl start cysm
+sudo systemctl enable cysm
 ```
 
 ## 7. SSL (HTTPS)
 
 ```bash
 sudo apt install certbot python3-certbot-nginx
-sudo certbot --nginx -d yourdomain.com
+sudo certbot --nginx -d cysmkd.org
 ```
