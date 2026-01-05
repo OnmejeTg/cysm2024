@@ -38,24 +38,24 @@ class Registration(generics.GenericAPIView):
         registrar_cys_code = request.data.pop('registrar_cys_code', None)
 
 
-        if isinstance(program_id, str):
-
-            program = Program.objects.get(id=program_id)
-            attendee = Attendee.objects.get(cys_code=user_cys_code)
-
-            if not ProgramRegistration.objects.filter(
-                attendee=attendee, program=program
-            ).exists():
-                program_reg = ProgramRegistration.objects.create(attendee=attendee, program=program)
-            else:
+        if program_id:
+            try:
+                program = Program.objects.get(id=program_id)
+                attendee = Attendee.objects.get(cys_code=user_cys_code)
+                
+                program_reg, created = ProgramRegistration.objects.get_or_create(
+                    attendee=attendee, program=program
+                )
+                
+                if registrar_cys_code:
+                    try:
+                        registrar = Registrar.objects.get(reg_id=registrar_cys_code)
+                        program_reg.registered_by = registrar
+                        program_reg.save()
+                    except Registrar.DoesNotExist:
+                        pass
+            except Program.DoesNotExist:
                 pass
-
-        else:
-            pass
-        if isinstance(registrar_cys_code, str):
-            registrar = Registrar.objects.get(reg_id=registrar_cys_code)
-            program_reg.registered_by = registrar
-            program_reg.save()
 
         return Response(
             {"status": "success", "data": serializer.data},
