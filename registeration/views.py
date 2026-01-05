@@ -23,44 +23,59 @@ from reportlab.lib import colors
 from django.conf import settings
 import os
 
+import logging
+import traceback
+from django.db import transaction
+
+logger = logging.getLogger(__name__)
+
 class Registration(generics.GenericAPIView):
     serializer_class = AttendeeSerializer
     queryset = Attendee.objects.all()
 
     def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-
-
-        program_id = request.data.pop('program', None)
-        user_cys_code = serializer.data.get("cys_code")
-        registrar_cys_code = request.data.pop('registrar_cys_code', None)
-
-
-        if program_id:
-            try:
-                program = Program.objects.get(id=program_id)
-                attendee = Attendee.objects.get(cys_code=user_cys_code)
+        try:
+            with transaction.atomic():
+                serializer = self.serializer_class(data=request.data)
+                if not serializer.is_valid():
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
                 
-                program_reg, created = ProgramRegistration.objects.get_or_create(
-                    attendee=attendee, program=program
-                )
-                
-                if registrar_cys_code:
-                    try:
-                        registrar = Registrar.objects.get(reg_id=registrar_cys_code)
-                        program_reg.registered_by = registrar
-                        program_reg.save()
-                    except Registrar.DoesNotExist:
-                        pass
-            except Program.DoesNotExist:
-                pass
+                serializer.save()
 
-        return Response(
-            {"status": "success", "data": serializer.data},
-            status=status.HTTP_201_CREATED,
-        )
+            program_id = request.data.get('program')
+            user_cys_code = serializer.data.get("cys_code")
+            registrar_cys_code = request.data.get('registrar_cys_code')
+
+            if program_id:
+                try:
+                    program = Program.objects.get(id=program_id)
+                    attendee = Attendee.objects.get(cys_code=user_cys_code)
+                    
+                    program_reg, created = ProgramRegistration.objects.get_or_create(
+                        attendee=attendee, program=program
+                    )
+                    
+                    if registrar_cys_code:
+                        try:
+                            registrar = Registrar.objects.get(reg_id=registrar_cys_code)
+                            program_reg.registered_by = registrar
+                            program_reg.save()
+                        except (Registrar.DoesNotExist, Exception):
+                            pass
+                except (Program.DoesNotExist, Attendee.DoesNotExist, Exception) as e:
+                    logger.error(f"Program association failed: {str(e)}")
+
+            return Response(
+                {"status": "success", "data": serializer.data},
+                status=status.HTTP_201_CREATED,
+            )
+        except Exception as e:
+            logger.error(f"Registration Error: {str(e)}")
+            logger.error(traceback.format_exc())
+            return Response(
+                {"status": "error", "message": str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class ViewAttendance(generics.ListAPIView):

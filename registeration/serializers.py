@@ -41,13 +41,24 @@ class AttendeeSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data["surname"] = validated_data["surname"].upper().strip()
         validated_data["other_name"] = validated_data["other_name"].capitalize().strip()
-        validated_data["sex"] = validated_data["sex"].strip().upper()[0]
+        if validated_data.get("sex"):
+            validated_data["sex"] = validated_data["sex"].strip().upper()[0]
+        else:
+            validated_data["sex"] = "X" # Fallback if empty
         current_year = str(datetime.now().year)[2:]
-        last_entry_count = (
-            int(Attendee.objects.latest("created_at").cys_code.split("-")[-1][1:]) + 1
-            if Attendee.objects.exists()
-            else 1
-        )
+        try:
+            if Attendee.objects.exists():
+                last_code = Attendee.objects.latest("created_at").cys_code
+                # Safe parsing of CYS24-M123
+                parts = last_code.split("-")
+                if len(parts) > 1 and len(parts[-1]) > 1:
+                    last_entry_count = int(parts[-1][1:]) + 1
+                else:
+                    last_entry_count = Attendee.objects.count() + 1
+            else:
+                last_entry_count = 1
+        except (ValueError, IndexError, AttributeError):
+            last_entry_count = Attendee.objects.count() + 1
 
         validated_data[
             "cys_code"
