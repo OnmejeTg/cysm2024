@@ -1,13 +1,31 @@
 from django.contrib import admin
+from datetime import datetime   
 from . models import Attendee, Registrar
 from .resources import AttendeeResource, RegistrarResource  
 from import_export.admin import ImportExportModelAdmin
+
+
+
+class RegistrationDateFilter(admin.SimpleListFilter):
+    title = 'Specific Registration Date'
+    parameter_name = 'reg_date'
+    
+    def lookups(self, request, model_admin):
+        dates = Attendee.objects.dates('created_at','day',order='DESC')
+        return [(date.strftime('%Y-%m-%d'), date.strftime('%d %b, %Y')) for date in dates]
+    
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(created_at__date=self.value())
+        return queryset
+
+
 
 @admin.register(Attendee)
 class AttendeeAdmin(ImportExportModelAdmin):
     list_display = ('surname', 'other_name', 'email', 'phone', 'created_at')  
     search_fields = ('surname', 'other_name', 'email', 'phone', 'cys_code')
-    list_filter = ('created_at',)
+    list_filter = (RegistrationDateFilter,)
     resource_class = AttendeeResource
 
 @admin.register(Registrar)
